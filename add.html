@@ -1,0 +1,65 @@
+<html>
+
+<head>
+    <title>WASM test</title>
+</head>
+
+<body>
+    <script>
+        // sudo docker run --rm -v $(pwd):/codes -u $(id -u):$(id -g) emscripten/emsdk emcc /codes/add.c -Os -s SIDE_MODULE=1 -o /codes/add.wasm
+        // sudo docker run --rm -v $(pwd):/codes -u $(id -u):$(id -g) emscripten/emsdk em++ /codes/add.cpp -Os -s WASM=1 -s EXPORTED_FUNCTIONS="['_square','_add']" -o /codes/addplus.wasm
+        /*
+        (async () => {
+            const env = {
+                memoryBase: 0,
+                tableBase: 0,
+                memory: new WebAssembly.Memory({
+                    initial: 256
+                }),
+                table: new WebAssembly.Table({
+                    initial: 2,
+                    element: 'anyfunc'
+                })
+            };
+            const instance = await fetch("http://localhost:5000/add.wasm").then((response) => {
+                return response.arrayBuffer();
+            }).then((bytes) => {
+                return WebAssembly.instantiate(bytes, { env: env })
+            }).then((instance) => {
+                return instance.instance.exports;
+            });
+
+            console.log(instance);
+            const add = await instance.add;
+            const square = await instance.square;
+            document.getElementById("addTarget").textContent = add(
+                10,
+                16
+            );
+            document.getElementById("squareTarget").textContent = square(
+                16
+            );
+        })();
+        */
+
+        (async function () {
+            const { instance } = await WebAssembly.instantiateStreaming(fetch("http://localhost:5000/add.wasm"));
+            console.log(instance.exports);
+            const add = await instance.exports.add;
+            const square = await instance.exports.square;
+            document.getElementById("addTarget").textContent = add(
+                10,
+                16
+            );
+            document.getElementById("squareTarget").textContent = square(
+                16
+            );
+        })();
+
+    </script>
+    <h1>Result C++</h1>
+    <p id="addTarget"></p>
+    <p id="squareTarget"></p>
+</body>
+
+</html>
